@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Upload Projects</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <h1>Admin Panel - Upload Projects</h1>
+
+  <!-- Upload Form -->
+  <form action="/admin/upload" method="POST" enctype="multipart/form-data">
+    <input type="text" name="projectName" placeholder="Project Name" required>
+    <input type="text" name="description" placeholder="Description" required>
+    <input type="number" name="price" placeholder="Price" required>
+    <input type="file" name="image" required>
+    <input type="file" name="file" required>
+    <button type="submit">Upload Project</button>
+  </form>
+
+  <hr>
+
+  <h2>Uploaded Projects</h2>
+  <div id="project-list">
+    <!-- Projects will load here -->
+  </div>
+
+  <script>
+    async function loadProjects() {
+      const res = await fetch('/projects');
+      const data = await res.json();
+
+      const projectList = document.getElementById('project-list');
+      projectList.innerHTML = '';
+
+      data.forEach((proj, index) => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+          <h3>${proj.projectName} - ₹${proj.price}</h3>
+          <p>${proj.description}</p>
+          <img src="${proj.image}" width="150" alt="${proj.projectName}">
+          <a href="${proj.file}" download>Download</a>
+          <button onclick="deleteProject(${index})">Delete</button>
+          <hr>
+        `;
+        projectList.appendChild(div);
+      });
+    }
+
+    async function deleteProject(index) {
+      if(confirm('Are you sure you want to delete this project?')) {
+        await fetch(`/admin/delete/${index}`);
+        loadProjects();
+      }
+    }
+
+    // Load projects on page load
+    loadProjects();
+  </script>
+</body>
+</html>
