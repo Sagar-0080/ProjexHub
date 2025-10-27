@@ -1,6 +1,3 @@
-// Load environment variables
-require('dotenv').config();
-
 const express = require('express');
 const multer = require('multer');
 const bodyParser = require('body-parser');
@@ -8,18 +5,18 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 require('dotenv').config();
-console.log("✅ Loaded ENV Vars:", process.env.CASHFREE_APP_ID, process.env.CASHFREE_SECRET_KEY);
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
-// Middleware
+// ✅ Debug ENV variables (optional)
+console.log("✅ ENV Loaded:", process.env.CASHFREE_APP_ID, process.env.CASHFREE_SECRET_KEY);
+
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.json());
 app.use(express.static('public'));
 app.use('/uploads', express.static('uploads'));
 
-// Multer setup for file uploads
+// 🧩 Multer setup
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (file.fieldname === 'image') cb(null, 'public/images');
@@ -29,26 +26,23 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Admin credentials (from .env)
+// 👨‍💼 Admin credentials
 const adminUser = {
   username: process.env.ADMIN_USERNAME || 'admin',
   password: process.env.ADMIN_PASSWORD || 'projexhub123'
 };
 
-// Routes
+// 🛠️ Routes
 app.get('/admin/login', (req, res) => res.sendFile(__dirname + '/admin/login.html'));
-
 app.post('/admin/login', (req, res) => {
   const { username, password } = req.body;
-  if (username === adminUser.username && password === adminUser.password) {
+  if (username === adminUser.username && password === adminUser.password)
     res.redirect('/admin/upload');
-  } else {
-    res.send('Invalid credentials');
-  }
+  else res.send('Invalid credentials');
 });
 
+// Upload page
 app.get('/admin/upload', (req, res) => res.sendFile(__dirname + '/admin/upload.html'));
-
 app.post('/admin/upload', upload.fields([{ name: 'image' }, { name: 'file' }]), (req, res) => {
   const { projectName, description, price } = req.body;
   const image = '/images/' + req.files['image'][0].filename;
@@ -62,14 +56,7 @@ app.post('/admin/upload', upload.fields([{ name: 'image' }, { name: 'file' }]), 
   res.send('✅ Project uploaded! <a href="/admin/upload">Upload more</a>');
 });
 
-// Fetch all projects
-app.get('/projects', (req, res) => {
-  let data = [];
-  if (fs.existsSync('data.json')) data = JSON.parse(fs.readFileSync('data.json'));
-  res.json(data);
-});
-
-// Delete a project (admin)
+// Delete project (Admin only)
 app.get('/admin/delete/:index', (req, res) => {
   const index = parseInt(req.params.index);
   if (fs.existsSync('data.json')) {
@@ -86,11 +73,18 @@ app.get('/admin/delete/:index', (req, res) => {
   res.redirect('/admin/upload');
 });
 
-// 🟢 Cashfree Payment Integration
-app.post('/create-order', async (req, res) => {
+// 📦 Get all projects
+app.get('/projects', (req, res) => {
+  let data = [];
+  if (fs.existsSync('data.json')) data = JSON.parse(fs.readFileSync('data.json'));
+  res.json(data);
+});
+
+// 💰 Cashfree Integration
+app.post("/create-order", async (req, res) => {
   try {
-    const amount = req.body.amount || 100; // Default amount for testing
-    const url = "https://sandbox.cashfree.com/pg/orders"; // Test mode URL
+    const amount = req.body.amount || 100;
+    const url = "https://sandbox.cashfree.com/pg/orders";
 
     const response = await axios.post(
       url,
@@ -107,6 +101,7 @@ app.post('/create-order', async (req, res) => {
         headers: {
           "x-client-id": process.env.CASHFREE_APP_ID,
           "x-client-secret": process.env.CASHFREE_SECRET_KEY,
+          "x-api-version": "2022-01-01",
           "Content-Type": "application/json"
         }
       }
@@ -114,13 +109,14 @@ app.post('/create-order', async (req, res) => {
 
     console.log("✅ Cashfree order created:", response.data);
     res.json(response.data);
+
   } catch (error) {
     console.error("❌ Cashfree Error:", error.response?.data || error.message);
     res.status(500).send("Error creating payment order");
   }
 });
 
-// Main homepage
+// 🏠 Main homepage
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
