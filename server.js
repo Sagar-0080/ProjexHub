@@ -1,7 +1,3 @@
-// ===========================
-// ✅ ProjexHub Server with Cashfree Integration
-// ===========================
-
 require("dotenv").config();
 const express = require("express");
 const multer = require("multer");
@@ -11,10 +7,11 @@ const path = require("path");
 const axios = require("axios");
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 3000;
 
+// Middleware
+app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.json());
 app.use(express.static("public"));
 app.use("/uploads", express.static("uploads"));
 
@@ -28,17 +25,18 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Admin login setup
+// Admin credentials (from env)
 const adminUser = {
   username: process.env.ADMIN_USER || "admin",
   password: process.env.ADMIN_PASS || "projexhub123",
 };
 
-// Admin routes
+// Admin login
 app.get("/admin/login", (req, res) => res.sendFile(__dirname + "/admin/login.html"));
 app.post("/admin/login", (req, res) => {
   const { username, password } = req.body;
-  if (username === adminUser.username && password === adminUser.password) res.redirect("/admin/upload");
+  if (username === adminUser.username && password === adminUser.password)
+    res.redirect("/admin/upload");
   else res.send("Invalid credentials");
 });
 
@@ -53,7 +51,7 @@ app.post("/admin/upload", upload.fields([{ name: "image" }, { name: "file" }]), 
   data.push({ projectName, description, price, image, file });
   fs.writeFileSync("data.json", JSON.stringify(data, null, 2));
 
-  res.send('✅ Project uploaded! <a href="/admin/upload">Upload more</a>');
+  res.send("Project uploaded! <a href='/admin/upload'>Upload more</a>");
 });
 
 // Get all projects
@@ -63,7 +61,7 @@ app.get("/projects", (req, res) => {
   res.json(data);
 });
 
-// Delete project (Admin only)
+// Delete project
 app.get("/admin/delete/:index", (req, res) => {
   const index = parseInt(req.params.index);
   if (fs.existsSync("data.json")) {
@@ -80,12 +78,10 @@ app.get("/admin/delete/:index", (req, res) => {
   res.redirect("/admin/upload");
 });
 
-// ===========================
-// 💳 Cashfree Payment Integration
-// ===========================
+// ✅ Cashfree Integration (Fixed)
 app.post("/create-order", async (req, res) => {
   try {
-    const amount = req.body.amount || 100; // default ₹100
+    const amount = req.body.amount || 100;
 
     const url = "https://sandbox.cashfree.com/pg/orders";
 
@@ -94,6 +90,7 @@ app.post("/create-order", async (req, res) => {
       {
         order_amount: amount,
         order_currency: "INR",
+        order_note: "ProjexHub Payment",
         customer_details: {
           customer_id: "CUST001",
           customer_email: "test@cashfree.com",
@@ -112,18 +109,19 @@ app.post("/create-order", async (req, res) => {
     );
 
     console.log("✅ Cashfree order created:", response.data);
+
+    // Return full response to frontend
     res.json(response.data);
   } catch (error) {
     console.error("❌ Cashfree Error:", error.response?.data || error.message);
-    res.status(500).send("Error creating payment order");
+    res.status(500).json({
+      error: true,
+      message: error.response?.data?.message || "Error creating payment order",
+    });
   }
 });
 
-// ===========================
-// 🏠 Homepage
-// ===========================
-app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/public/index.html");
-});
+// Home page
+app.get("/", (req, res) => res.sendFile(__dirname + "/public/index.html"));
 
-app.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
