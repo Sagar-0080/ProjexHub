@@ -5,6 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ProjexHub - Student Projects</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f6fa;
+    }
+    header {
+      background: #222;
+      color: #fff;
+      padding: 15px;
+      text-align: center;
+    }
+    #search {
+      width: 80%;
+      max-width: 400px;
+      padding: 8px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 5px;
+    }
+    .project-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      margin: 20px auto;
+      padding: 15px;
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+    }
+    .project-card img {
+      width: 100%;
+      border-radius: 10px;
+    }
+    .buy-btn {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .buy-btn:hover {
+      background: #218838;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -13,7 +61,7 @@
   </header>
 
   <main id="project-list">
-    <!-- Projects will load dynamically -->
+    <p style="text-align:center; margin-top:30px;">Loading projects...</p>
   </main>
 
   <script src="script.js"></script>

@@ -1,78 +1,65 @@
-// ✅ ProjexHub Frontend + Cashfree Integration
+// Fetch and display projects
+async function loadProjects() {
+  const res = await fetch("/projects");
+  const projects = await res.json();
 
-document.addEventListener("DOMContentLoaded", () => {
   const projectList = document.getElementById("project-list");
-  const searchInput = document.getElementById("search");
+  projectList.innerHTML = "";
 
-  // 🧩 Fetch projects from backend
-  async function loadProjects() {
-    const res = await fetch("/projects");
-    const data = await res.json();
-    displayProjects(data);
-  }
-
-  // 🧩 Display projects
-  function displayProjects(projects) {
-    projectList.innerHTML = "";
-    projects.forEach((p, index) => {
-      const card = document.createElement("div");
-      card.classList.add("card");
-      card.innerHTML = `
-        <img src="${p.image}" alt="${p.projectName}">
-        <h3>${p.projectName}</h3>
-        <p>${p.description}</p>
-        <p><strong>Price:</strong> ₹${p.price}</p>
-        <button class="buy-btn" data-price="${p.price}">Buy Now</button>
-      `;
-      projectList.appendChild(card);
-    });
-
-    attachBuyListeners();
-  }
-
-  // 🧩 Add Cashfree Payment logic
-  function attachBuyListeners() {
-    const buttons = document.querySelectorAll(".buy-btn");
-    buttons.forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const amount = btn.getAttribute("data-price") || 100;
-
-        try {
-          const res = await fetch("/create-order", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ amount }),
-          });
-
-          if (!res.ok) throw new Error("❌ Failed to create order");
-
-          const data = await res.json();
-          console.log("✅ Cashfree Order:", data);
-
-          if (data.payment_link) {
-            window.location.href = data.payment_link;
-          } else {
-            alert("❌ Payment link not received.");
-          }
-        } catch (err) {
-          console.error("❌ Payment Error:", err);
-          alert("❌ Payment failed to start. Try again!");
-        }
-      });
-    });
-  }
-
-  // 🧩 Search Function
-  searchInput.addEventListener("input", async (e) => {
-    const query = e.target.value.toLowerCase();
-    const res = await fetch("/projects");
-    const data = await res.json();
-    const filtered = data.filter(p =>
-      p.projectName.toLowerCase().includes(query)
-    );
-    displayProjects(filtered);
+  projects.forEach((p, index) => {
+    const card = document.createElement("div");
+    card.classList.add("project-card");
+    card.innerHTML = `
+      <img src="${p.image}" alt="${p.projectName}">
+      <h3>${p.projectName}</h3>
+      <p>${p.description}</p>
+      <p><b>Price:</b> ₹${p.price}</p>
+      <button class="buy-btn" data-amount="${p.price}" data-name="${p.projectName}">Buy Now</button>
+    `;
+    projectList.appendChild(card);
   });
 
-  // Initial Load
-  loadProjects();
+  // Reattach buy button listeners
+  attachBuyButtons();
+}
+
+// Attach payment buttons
+function attachBuyButtons() {
+  document.querySelectorAll(".buy-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const amount = btn.getAttribute("data-amount") || 100;
+
+      try {
+        const res = await fetch("/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount }),
+        });
+
+        const data = await res.json();
+        console.log("💰 Cashfree Response:", data);
+
+        if (data && data.payment_link) {
+          window.location.href = data.payment_link; // redirect to Cashfree
+        } else {
+          alert("❌ Payment failed to start. Try again!");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("⚠️ Something went wrong while creating order.");
+      }
+    });
+  });
+}
+
+// Search filter
+document.getElementById("search").addEventListener("input", (e) => {
+  const term = e.target.value.toLowerCase();
+  document.querySelectorAll(".project-card").forEach((card) => {
+    const name = card.querySelector("h3").innerText.toLowerCase();
+    card.style.display = name.includes(term) ? "block" : "none";
+  });
 });
+
+// Load projects on page load
+window.onload = loadProjects;
