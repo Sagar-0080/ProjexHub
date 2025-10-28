@@ -25,13 +25,13 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Admin credentials (from env)
+// Admin credentials
 const adminUser = {
   username: process.env.ADMIN_USER || "admin",
   password: process.env.ADMIN_PASS || "projexhub123",
 };
 
-// Admin login
+// Admin login routes
 app.get("/admin/login", (req, res) => res.sendFile(__dirname + "/admin/login.html"));
 app.post("/admin/login", (req, res) => {
   const { username, password } = req.body;
@@ -83,10 +83,8 @@ app.post("/create-order", async (req, res) => {
   try {
     const amount = req.body.amount || 100;
 
-    const url = "https://sandbox.cashfree.com/pg/orders";
-
     const response = await axios.post(
-      url,
+      "https://sandbox.cashfree.com/pg/orders",
       {
         order_amount: amount,
         order_currency: "INR",
@@ -110,8 +108,8 @@ app.post("/create-order", async (req, res) => {
 
     console.log("✅ Cashfree order created:", response.data);
 
-    // Return full response to frontend
-    res.json(response.data);
+    // ✅ Return only session_id to frontend
+    res.json({ payment_session_id: response.data.payment_session_id });
   } catch (error) {
     console.error("❌ Cashfree Error:", error.response?.data || error.message);
     res.status(500).json({
