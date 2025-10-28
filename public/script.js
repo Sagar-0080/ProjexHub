@@ -1,46 +1,39 @@
-// Function to load projects from server
-async function loadProjects() {
-  const projectList = document.getElementById('projectList');
-  projectList.innerHTML = '<p>Loading projects...</p>';
+// ✅ Cashfree Payment Integration (Frontend)
 
-  try {
-    const res = await fetch('/projects');
-    const data = await res.json();
+document.addEventListener("DOMContentLoaded", () => {
+  const buyButtons = document.querySelectorAll(".buy-btn");
 
-    if (data.length === 0) {
-      projectList.innerHTML = '<p>No projects uploaded yet.</p>';
-      return;
-    }
+  buyButtons.forEach((button) => {
+    button.addEventListener("click", async () => {
+      const price = button.getAttribute("data-price") || 100;
 
-    projectList.innerHTML = '';
-    data.forEach((project, index) => {
-      const projectItem = document.createElement('div');
-      projectItem.classList.add('project-item');
-      projectItem.innerHTML = `
-        <img src="${project.image}" alt="${project.projectName}" />
-        <h3>${project.projectName}</h3>
-        <p>${project.description}</p>
-        <p><strong>Price:</strong> ₹${project.price}</p>
-        <a href="${project.file}" download>📁 Download Project</a>
-      `;
-      projectList.appendChild(projectItem);
+      try {
+        const response = await fetch("/create-order", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ amount: price }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to create Cashfree order");
+        }
+
+        const data = await response.json();
+        console.log("✅ Cashfree Response:", data);
+
+        // ✅ Redirect to Cashfree payment page (sandbox)
+        if (data.payment_link) {
+          window.location.href = data.payment_link;
+        } else {
+          alert("❌ Payment link missing. Try again!");
+        }
+
+      } catch (error) {
+        console.error("❌ Payment Error:", error);
+        alert("❌ Payment failed to start. Try again!");
+      }
     });
-  } catch (error) {
-    projectList.innerHTML = '<p>Error loading projects.</p>';
-    console.error(error);
-  }
-}
-
-// Search filter
-document.getElementById('searchBar').addEventListener('input', function () {
-  const searchValue = this.value.toLowerCase();
-  const projects = document.querySelectorAll('.project-item');
-
-  projects.forEach(project => {
-    const name = project.querySelector('h3').textContent.toLowerCase();
-    project.style.display = name.includes(searchValue) ? 'block' : 'none';
   });
 });
-
-// Load projects when page loads
-window.onload = loadProjects;
