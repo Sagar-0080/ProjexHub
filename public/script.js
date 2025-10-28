@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const projectList = document.getElementById("project-list");
   const search = document.getElementById("search");
 
-  // 🟢 Load all projects
+  // 🔹 Load all projects
   fetch("/projects")
     .then((res) => res.json())
     .then((projects) => {
@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .join("");
     });
 
-  // 🟣 Search functionality
+  // 🔹 Search
   search.addEventListener("input", (e) => {
     const query = e.target.value.toLowerCase();
     document.querySelectorAll(".project").forEach((proj) => {
@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// 🟠 Payment function
+// 🟢 Payment Logic
 async function buyNow(amount) {
   try {
     const response = await fetch("/create-order", {
@@ -43,12 +43,21 @@ async function buyNow(amount) {
     const data = await response.json();
     console.log("💰 Cashfree Response:", data);
 
+    // ✅ Case 1: Direct payment link from backend
     if (data.payment_link) {
-      // ✅ Redirect to Cashfree checkout
       window.location.href = data.payment_link;
-    } else {
-      alert("❌ Payment failed to start. Try again!");
+      return;
     }
+
+    // ✅ Case 2: payment_session_id exists (generate URL manually)
+    if (data.payment_session_id) {
+      const url = `https://sandbox.cashfree.com/pg/view/sessions/checkout/web/${data.payment_session_id}`;
+      window.location.href = url;
+      return;
+    }
+
+    // ❌ No valid link or session found
+    alert("❌ Payment failed to start. Try again!");
   } catch (err) {
     console.error("❌ Payment Error:", err);
     alert("❌ Payment failed. Please try again later!");
