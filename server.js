@@ -6,7 +6,7 @@ const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
 
-const app = express(); // ✅ This must be before any app.get/post
+const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
@@ -25,13 +25,13 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Admin credentials (from env)
+// Admin credentials
 const adminUser = {
   username: process.env.ADMIN_USER || "admin",
   password: process.env.ADMIN_PASS || "projexhub123",
 };
 
-// Admin routes
+// Admin login
 app.get("/admin/login", (req, res) => res.sendFile(__dirname + "/admin/login.html"));
 app.post("/admin/login", (req, res) => {
   const { username, password } = req.body;
@@ -54,7 +54,7 @@ app.post("/admin/upload", upload.fields([{ name: "image" }, { name: "file" }]), 
   res.send("Project uploaded! <a href='/admin/upload'>Upload more</a>");
 });
 
-// Fetch all projects
+// Get all projects
 app.get("/projects", (req, res) => {
   let data = [];
   if (fs.existsSync("data.json")) data = JSON.parse(fs.readFileSync("data.json"));
@@ -78,7 +78,7 @@ app.get("/admin/delete/:index", (req, res) => {
   res.redirect("/admin/upload");
 });
 
-// ✅ Cashfree Integration (Latest)
+// ✅ Cashfree Integration (Fixed)
 app.post("/create-order", async (req, res) => {
   try {
     const amount = req.body.amount || 100;
@@ -95,14 +95,11 @@ app.post("/create-order", async (req, res) => {
           customer_email: "test@cashfree.com",
           customer_phone: "9999999999",
         },
-        order_meta: {
-          return_url: "https://projexhub-80m8.onrender.com/success",
-        },
       },
       {
         headers: {
           accept: "application/json",
-          "x-api-version": "2023-08-01",
+          "x-api-version": "2022-09-01",
           "x-client-id": process.env.CASHFREE_APP_ID,
           "x-client-secret": process.env.CASHFREE_SECRET_KEY,
           "Content-Type": "application/json",
@@ -111,7 +108,11 @@ app.post("/create-order", async (req, res) => {
     );
 
     console.log("✅ Cashfree order created:", response.data);
-    res.json(response.data);
+
+    res.json({
+      payment_session_id: response.data.payment_session_id,
+      order_id: response.data.order_id,
+    });
   } catch (error) {
     console.error("❌ Cashfree Error:", error.response?.data || error.message);
     res.status(500).json({
@@ -121,8 +122,7 @@ app.post("/create-order", async (req, res) => {
   }
 });
 
-// Main homepage
+// Home page
 app.get("/", (req, res) => res.sendFile(__dirname + "/public/index.html"));
 
-// Start server
 app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
