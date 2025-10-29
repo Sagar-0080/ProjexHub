@@ -2,13 +2,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const projectList = document.getElementById("project-list");
   const search = document.getElementById("search");
 
-  // Load all projects
   fetch("/projects")
     .then((res) => res.json())
     .then((projects) => {
       projectList.innerHTML = projects
         .map(
-          (p, i) => `
+          (p) => `
         <div class="project">
           <img src="${p.image}" alt="${p.projectName}" />
           <h3>${p.projectName}</h3>
@@ -21,7 +20,6 @@ document.addEventListener("DOMContentLoaded", () => {
         .join("");
     });
 
-  // Search function
   search.addEventListener("input", (e) => {
     const query = e.target.value.toLowerCase();
     document.querySelectorAll(".project").forEach((proj) => {
@@ -31,7 +29,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// ✅ Payment Logic (Fixed)
 async function buyNow(amount) {
   try {
     const response = await fetch("/create-order", {
@@ -44,12 +41,11 @@ async function buyNow(amount) {
     console.log("💰 Cashfree Response:", data);
 
     if (data.payment_session_id) {
-      const payUrl = `https://sandbox.cashfree.com/pg/orders/pay/${data.payment_session_id}`;
-      window.location.href = payUrl;
-      return;
+      const url = `https://payments-test.cashfree.com/pg/view/sessions/${data.payment_session_id}`;
+      window.location.href = url;
+    } else {
+      alert("❌ Payment failed to start. Try again!");
     }
-
-    alert("❌ Payment failed to start. Try again!");
   } catch (err) {
     console.error("❌ Payment Error:", err);
     alert("❌ Payment failed. Please try again later!");
