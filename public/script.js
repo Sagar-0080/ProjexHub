@@ -47,11 +47,15 @@ async function buyNow(amount) {
 
     // ✅ If valid session or payment link exists
     if (data.payment_session_id) {
-      const checkoutUrl = `https://sandbox.cashfree.com/pg/view/checkout?payment_session_id=${data.payment_session_id}`;
+      // काही sandbox responses मध्ये "paymentpayment" येतो, तो कापूया
+      let cleanSessionId = data.payment_session_id.replace("paymentpayment", "").trim();
+
+      const checkoutUrl = `https://sandbox.cashfree.com/pg/view/sessions/checkout?payment_session_id=${cleanSessionId}`;
       console.log("Redirecting to:", checkoutUrl);
       window.location.href = checkoutUrl;
       return;
     } else if (data.payment_link) {
+      console.log("Redirecting to payment link:", data.payment_link);
       window.location.href = data.payment_link;
       return;
     }

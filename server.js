@@ -44,7 +44,6 @@ app.post("/admin/login", (req, res) => {
   else res.send("Invalid credentials");
 });
 
-// Admin upload page
 app.get("/admin/upload", (req, res) =>
   res.sendFile(__dirname + "/admin/upload.html")
 );
@@ -90,7 +89,7 @@ app.get("/admin/delete/:index", (req, res) => {
   res.redirect("/admin/upload");
 });
 
-// ✅ Cashfree Integration (final working version)
+// ✅ Cashfree Integration (final working)
 app.post("/create-order", async (req, res) => {
   try {
     const amount = req.body.amount || 100;
@@ -107,7 +106,7 @@ app.post("/create-order", async (req, res) => {
           customer_phone: "9999999999",
         },
         order_meta: {
-          return_url: "https://projexhub-80m8.onrender.com",
+          return_url: "https://projexhub-80m8.onrender.com/payment-success",
         },
       },
       {
@@ -122,7 +121,10 @@ app.post("/create-order", async (req, res) => {
     );
 
     console.log("✅ Cashfree order created:", response.data);
-    res.json(response.data);
+    res.json({
+      payment_session_id: response.data.payment_session_id,
+      payment_link: response.data.payment_link,
+    });
   } catch (error) {
     console.error("❌ Cashfree Error:", error.response?.data || error.message);
     res.status(500).json({
@@ -132,6 +134,11 @@ app.post("/create-order", async (req, res) => {
         "Error creating payment order. Please try again later.",
     });
   }
+});
+
+// ✅ Payment success page
+app.get("/payment-success", (req, res) => {
+  res.send("<h2>✅ Payment Successful!</h2><p>Thank you for your purchase.</p>");
 });
 
 // Home page
