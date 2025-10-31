@@ -45,22 +45,22 @@ async function buyNow(amount) {
     const data = await response.json();
     console.log("💰 Cashfree Response:", data);
 
-    // ✅ If valid session or payment link exists
-    if (data.payment_session_id) {
-      // काही sandbox responses मध्ये "paymentpayment" येतो, तो कापूया
-      let cleanSessionId = data.payment_session_id.replace("paymentpayment", "").trim();
-
-      const checkoutUrl = `https://sandbox.cashfree.com/pg/view/sessions/checkout?payment_session_id=${cleanSessionId}`;
-      console.log("Redirecting to:", checkoutUrl);
-      window.location.href = checkoutUrl;
-      return;
-    } else if (data.payment_link) {
-      console.log("Redirecting to payment link:", data.payment_link);
+    // ✅ 1️⃣ Payment link (if present)
+    if (data.payment_link) {
       window.location.href = data.payment_link;
       return;
     }
 
-    // ❌ If something goes wrong
+    // ✅ 2️⃣ Payment session (most common in sandbox)
+    if (data.payment_session_id) {
+      // 👇 Correct new Cashfree Checkout URL format
+      const checkoutUrl = `https://sandbox.cashfree.com/pg/view/sessions/${data.payment_session_id}`;
+      console.log("Redirecting to:", checkoutUrl);
+      window.location.href = checkoutUrl;
+      return;
+    }
+
+    // ❌ 3️⃣ Fallback
     alert("❌ Payment failed to start. Please try again later!");
   } catch (err) {
     console.error("❌ Payment Error:", err);
