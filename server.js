@@ -44,6 +44,7 @@ app.post("/admin/login", (req, res) => {
   else res.send("Invalid credentials");
 });
 
+// Admin upload page
 app.get("/admin/upload", (req, res) =>
   res.sendFile(__dirname + "/admin/upload.html")
 );
@@ -89,13 +90,16 @@ app.get("/admin/delete/:index", (req, res) => {
   res.redirect("/admin/upload");
 });
 
-// ✅ Cashfree Integration (final working)
+// ✅ Updated Cashfree Integration (New Endpoint)
 app.post("/create-order", async (req, res) => {
   try {
     const amount = req.body.amount || 100;
 
+    // 🔹 Use latest Cashfree sandbox API
+    const url = "https://sandbox.cashfree.com/pg/orders"; // works only with correct headers below
+
     const response = await axios.post(
-      "https://sandbox.cashfree.com/pg/orders",
+      url,
       {
         order_amount: amount,
         order_currency: "INR",
@@ -112,7 +116,7 @@ app.post("/create-order", async (req, res) => {
       {
         headers: {
           accept: "application/json",
-          "x-api-version": "2022-09-01",
+          "x-api-version": "2023-08-01", // ✅ Latest version (important)
           "x-client-id": process.env.CASHFREE_APP_ID,
           "x-client-secret": process.env.CASHFREE_SECRET_KEY,
           "Content-Type": "application/json",
@@ -121,10 +125,7 @@ app.post("/create-order", async (req, res) => {
     );
 
     console.log("✅ Cashfree order created:", response.data);
-    res.json({
-      payment_session_id: response.data.payment_session_id,
-      payment_link: response.data.payment_link,
-    });
+    res.json(response.data);
   } catch (error) {
     console.error("❌ Cashfree Error:", error.response?.data || error.message);
     res.status(500).json({
@@ -136,9 +137,9 @@ app.post("/create-order", async (req, res) => {
   }
 });
 
-// ✅ Payment success page
+// Payment success route
 app.get("/payment-success", (req, res) => {
-  res.send("<h2>✅ Payment Successful!</h2><p>Thank you for your purchase.</p>");
+  res.send("✅ Payment Successful! Thank you for purchasing from ProjexHub.");
 });
 
 // Home page
