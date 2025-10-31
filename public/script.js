@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const projectList = document.getElementById("project-list");
   const search = document.getElementById("search");
 
+  // 🔹 Load all projects
   fetch("/projects")
     .then((res) => res.json())
     .then((projects) => {
@@ -14,11 +15,13 @@ document.addEventListener("DOMContentLoaded", () => {
           <p>${p.description}</p>
           <p><strong>₹${p.price}</strong></p>
           <button onclick="buyNow(${p.price})">Buy Now</button>
-        </div>`
+        </div>
+      `
         )
         .join("");
     });
 
+  // 🔹 Search filter
   search.addEventListener("input", (e) => {
     const query = e.target.value.toLowerCase();
     document.querySelectorAll(".project").forEach((proj) => {
@@ -28,9 +31,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+// 🟢 Payment Logic (Updated for Cashfree)
 async function buyNow(amount) {
   try {
-    console.log("🟡 Creating order for amount:", amount);
+    console.log("🟡 Creating Cashfree order for ₹" + amount);
 
     const response = await fetch("/create-order", {
       method: "POST",
@@ -41,14 +45,18 @@ async function buyNow(amount) {
     const data = await response.json();
     console.log("💰 Cashfree Response:", data);
 
-    if (data.payment_session_id) {
-      const checkoutUrl = `https://sandbox.cashfree.com/pg/view/checkout?payment_session_id=${data.payment_session_id}`;
+    if (data && data.payment_session_id) {
+      // ✅ Correct latest Cashfree checkout URL
+      const checkoutUrl = `https://sandbox.cashfree.com/pg/view/sessions/${data.payment_session_id}`;
+      console.log("Redirecting to:", checkoutUrl);
       window.location.href = checkoutUrl;
+    } else if (data.payment_link) {
+      window.location.href = data.payment_link;
     } else {
-      alert("❌ Payment failed to start. Please try again!");
+      alert("❌ Payment could not start. Please try again later!");
     }
-  } catch (error) {
-    console.error("❌ Error:", error);
-    alert("❌ Something went wrong. Try again!");
+  } catch (err) {
+    console.error("❌ Payment Error:", err);
+    alert("❌ Something went wrong while starting payment!");
   }
 }
