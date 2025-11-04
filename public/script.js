@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const projectList = document.getElementById("project-list");
   const search = document.getElementById("search");
 
-  // 🔹 Load all projects
+  // Load projects
   fetch("/projects")
     .then((res) => res.json())
     .then((projects) => {
@@ -21,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
         .join("");
     });
 
-  // 🔹 Search filter
   search.addEventListener("input", (e) => {
     const query = e.target.value.toLowerCase();
     document.querySelectorAll(".project").forEach((proj) => {
@@ -31,11 +30,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// 🟢 Payment Logic (Updated for Cashfree)
+// ✅ Cashfree Payment Logic
 async function buyNow(amount) {
   try {
-    console.log("🟡 Creating Cashfree order for ₹" + amount);
-
     const response = await fetch("/create-order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -45,18 +42,14 @@ async function buyNow(amount) {
     const data = await response.json();
     console.log("💰 Cashfree Response:", data);
 
-    if (data && data.payment_session_id) {
-      // ✅ Correct latest Cashfree checkout URL
-      const checkoutUrl = `https://sandbox.cashfree.com/pg/view/sessions/${data.payment_session_id}`;
-      console.log("Redirecting to:", checkoutUrl);
+    if (data.payment_session_id) {
+      const checkoutUrl = `https://sandbox.cashfree.com/pg/view/sessions/checkout/web/${data.payment_session_id}`;
       window.location.href = checkoutUrl;
-    } else if (data.payment_link) {
-      window.location.href = data.payment_link;
     } else {
-      alert("❌ Payment could not start. Please try again later!");
+      alert("❌ Payment failed to start. Please try again later!");
     }
   } catch (err) {
     console.error("❌ Payment Error:", err);
-    alert("❌ Something went wrong while starting payment!");
+    alert("❌ Something went wrong. Please try again later!");
   }
 }
